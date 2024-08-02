@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Niños por Día</title>
+    <!-- Incluye Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Incluye SheetJS -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.16.2/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Listado de Niños por Día</h1>
+        <div class="form-group">
+            <label for="day-select">Selecciona un día de la semana:</label>
+            <select class="form-control" id="day-select" onchange="cambiarDia()">
+                <option value="lunes">Lunes</option>
+                <option value="martes">Martes</option>
+                <option value="miercoles">Miércoles</option>
+                <option value="jueves">Jueves</option>
+                <option value="viernes">Viernes</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="date-select">Selecciona la fecha:</label>
+            <input type="date" class="form-control" id="date-select">
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nombre del Niño</th>
+                        <th>Nombre de la Mamá</th>
+                        <th>Curso de la Mamá</th>
+                        <th>Edad</th>
+                        <th>Asistencia</th>
+                        <th>Ubicación</th>
+                        <th>Reporte</th>
+                        <th>Nota</th>
+                    </tr>
+                </thead>
+                <tbody id="children-list">
+                    <!-- Filas generadas dinámicamente por JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        <button class="btn btn-primary mt-3" onclick="guardarAsistencia()">Guardar Asistencia</button>
+        <button class="btn btn-secondary mt-3 ml-3" onclick="agregarNino()">Agregar Niño</button>
+    </div>
+
+    <!-- Incluye Bootstrap JS y dependencias -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script>
+        const childrenByDay = {
+            lunes: [
+                { name: "Juan Pérez", mother: "María Pérez", course: "Belleza MA", age: "6-14" },
+                { name: "Ana Gómez", mother: "Luisa Gómez", course: "Hotelería MA", age: "15-24" },
+                { name: "Carlos Ruiz", mother: "Sandra Ruiz", course: "Cocina MA", age: "6-14" },
+                // Añadir más niños aquí
+            ],
+            martes: [
+                { name: "Lucía Fernández", mother: "Paula Fernández", course: "Belleza ME1", age: "6-14" },
+                { name: "Miguel Hernández", mother: "Laura Hernández", course: "Hotelería ME1", age: "15-24" },
+                { name: "Elena Torres", mother: "Marta Torres", course: "Cocina ME1", age: "6-14" },
+                // Añadir más niños aquí
+            ],
+            miercoles: [
+                { name: "Roberto Díaz", mother: "Clara Díaz", course: "Belleza ME2", age: "6-14" },
+                { name: "Isabel Martínez", mother: "Ana Martínez", course: "Hotelería ME2", age: "15-24" },
+                { name: "David Sánchez", mother: "Patricia Sánchez", course: "Cocina ME2", age: "6-14" },
+                // Añadir más niños aquí
+            ],
+            jueves: [
+                { name: "Sofía Romero", mother: "Verónica Romero", course: "TSF", age: "6-14" },
+                { name: "María López", mother: "Carmen López", course: "Belleza MA", age: "15-24" },
+                { name: "Pedro Sánchez", mother: "Ana Sánchez", course: "Hotelería MA", age: "6-14" },
+                // Añadir más niños aquí
+            ],
+            viernes: [
+                { name: "José González", mother: "Laura González", course: "Cocina MA", age: "6-14" },
+                { name: "Francisco Morales", mother: "Patricia Morales", course: "Belleza ME1", age: "15-24" },
+                { name: "Susana Díaz", mother: "Carmen Díaz", course: "Hotelería ME1", age: "6-14" },
+                // Añadir más niños aquí
+            ]
+        };
+
+        function cambiarDia() {
+            const day = document.getElementById('day-select').value;
+            const children = childrenByDay[day];
+            const tbody = document.getElementById('children-list');
+            tbody.innerHTML = '';
+
+            children.forEach((child, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${child.name}</td>
+                    <td>${child.mother}</td>
+                    <td>${child.course}</td>
+                    <td>
+                        <select class="form-control" id="age-${day}-${index}">
+                            <option value="6-14">6-14 meses</option>
+                            <option value="15-24">15-24 meses</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="btn btn-success btn-sm" id="attendance-yes-${day}-${index}" onclick="marcarAsistencia('${day}', ${index}, true)">Sí</button>
+                        <button class="btn btn-danger btn-sm" id="attendance-no-${day}-${index}" onclick="marcarAsistencia('${day}', ${index}, false)">No</button>
+                    </td>
+                    <td>
+                        <select class="form-control" id="state-${day}-${index}">
+                            <option value="Juanfe">Juanfe</option>
+                            <option value="Casa">Casa</option>
+                            <option value="CIDI">CIDI</option>
+                        </select>
+                    </td>
+                    <td><input type="text" class="form-control" id="report-${day}-${index}" placeholder="Reporte"></td>
+                    <td><input type="text" class="form-control" id="note-${day}-${index}" placeholder="Nota"></td>
+                `;
+                tbody.appendChild(row);
+                document.getElementById(`age-${day}-${index}`).value = child.age;
+            });
+        }
+
+        function marcarAsistencia(day, index, attended) {
+            document.getElementById(`attendance-yes-${day}-${index}`).classList.toggle('btn-success', attended);
+            document.getElementById(`attendance-no-${day}-${index}`).classList.toggle('btn-danger', !attended);
+        }
+
+        function guardarAsistencia() {
+            const day = document.getElementById('day-select').value;
+            const date = document.getElementById('date-select').value;
+            const children = childrenByDay[day];
+
+            const asistencia = children.map((child, index) => ({
+                name: child.name,
+                mother: child.mother,
+                course: child.course,
+                age: document.getElementById(`age-${day}-${index}`).value,
+                attended: document.getElementById(`attendance-yes-${day}-${index}`).classList.contains('btn-success') ? 'Presente' : 'Ausente',
+                state: document.getElementById(`state-${day}-${index}`).value,
+                report: document.getElementById(`report-${day}-${index}`).value,
+                note: document.getElementById(`note-${day}-${index}`).value,
+                date: date
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(asistencia);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Asistencia " + day.charAt(0).toUpperCase() + day.slice(1));
+
+            XLSX.writeFile(workbook, `asistencia_${day}_${date}.xlsx`);
+        }
+
+        function agregarNino() {
+            // Aquí puedes implementar la lógica para agregar un nuevo niño
+        }
+
+        // Inicializar la tabla con el primer día seleccionado
+        document.addEventListener('DOMContentLoaded', cambiarDia);
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
